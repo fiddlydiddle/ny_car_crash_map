@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import type { CarCrash } from './interfaces/carCrash'
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 // import 'leaflet/dist/leaflet.css';
 
 function App() {
@@ -30,6 +30,23 @@ function App() {
           <TileLayer 
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          {carCrashes && carCrashes.slice(0, 1000).map(crash => (
+            <Marker
+              key={crypto.randomUUID()}
+              position={[crash.LATITUDE, crash.LONGITUDE]}
+            >
+              <Popup>
+                <h6>{crash["CRASH DATE"]?.toString()}</h6>
+                <p>Borough: {crash.BOROUGH}</p>
+                <p>Number of Persons Injured: {crash["NUMBER OF PERSONS INJURED"]}</p>
+                <p>Number of Persons Killed: {crash["NUMBER OF PERSONS KILLED"]}</p>
+                <p>Number of Pedestrians Injured: {crash["NUMBER OF PEDESTRIANS INJURED"]}</p>
+                <p>Number of Pedestrians Killed: {crash["NUMBER OF PEDESTRIANS KILLED"]}</p>
+                <p>Number of Cyclists Injured: {crash["NUMBER OF CYCLIST INJURED"]}</p>
+                <p>Number of Cyclists Killed: {crash["NUMBER OF CYCLIST KILLED"]}</p>
+              </Popup>  
+            </Marker>
+          ))}
         </MapContainer>
       </div>
       <div>
@@ -51,7 +68,7 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {carCrashes && carCrashes.slice(0, 10).map(crash => (
+            {carCrashes && carCrashes.slice(0, 1000).map(crash => (
               <tr key={crypto.randomUUID()}>
                 <td>{crash["CRASH DATE"]?.toString()}</td>
                 <td>{crash["CRASH TIME"]}</td>

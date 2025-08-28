@@ -1,33 +1,74 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
+import type { CarCrash } from './interfaces/carCrash'
+import { MapContainer, TileLayer } from 'react-leaflet';
+// import 'leaflet/dist/leaflet.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  // const map = useMap();
+  // map.setCenter([40.7128, -74.0060]);
+  // map.setZoom(13);
+  // map.setScrollWheelZoom(true);
+  const [carCrashes, setCarCrashes] = useState<CarCrash[]>([])
+
+  // Component initialization
+  useEffect(() => {
+    fetch('/collision-data.json')
+      .then(response => response.json())
+      .then(data => setCarCrashes(data))
+      .catch(error => console.error('Error fetching data:', error))
+  }, []);
 
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <MapContainer
+          center={[40.7128, -74.0060]}
+          zoom={10}
+          id="map"
+        >
+          <TileLayer 
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        </MapContainer>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div>
+        <h3>Car Crashes in New York City</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Crash Date</th>
+              <th>Crash Time</th>
+              <th>Borough</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Number of Persons Injured</th>
+              <th>Number of Persons Killed</th>
+              <th>Number of Pedestrians Injured</th>
+              <th>Number of Pedestrians Killed</th>
+              <th>Number of Cyclists Injured</th>
+              <th>Number of Cyclists Killed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {carCrashes && carCrashes.slice(0, 10).map(crash => (
+              <tr key={crypto.randomUUID()}>
+                <td>{crash["CRASH DATE"]?.toString()}</td>
+                <td>{crash["CRASH TIME"]}</td>
+                <td>{crash.BOROUGH}</td>
+                <td>{crash.LATITUDE}</td>
+                <td>{crash.LONGITUDE}</td>
+                <td>{crash["NUMBER OF PERSONS INJURED"]}</td>
+                <td>{crash["NUMBER OF PERSONS KILLED"]}</td>
+                <td>{crash["NUMBER OF PEDESTRIANS INJURED"]}</td>
+                <td>{crash["NUMBER OF PEDESTRIANS KILLED"]}</td>
+                <td>{crash["NUMBER OF CYCLIST INJURED"]}</td>
+                <td>{crash["NUMBER OF CYCLIST KILLED"]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }

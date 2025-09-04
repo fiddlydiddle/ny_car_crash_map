@@ -1,23 +1,53 @@
 import { useEffect, useState } from 'react'
+import 'react-leaflet-markercluster/styles';
 import './App.css'
 import type { CarCrash } from './interfaces/carCrash'
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
-// import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import type { BBox, Feature } from 'geojson';
+import { Clusterer } from './components/Clusterer/Clusterer';
 
 function App() {
-  // const map = useMap();
-  // map.setCenter([40.7128, -74.0060]);
-  // map.setZoom(13);
-  // map.setScrollWheelZoom(true);
-  const [carCrashes, setCarCrashes] = useState<CarCrash[]>([])
+  const [carCrashes, setCarCrashes] = useState<CarCrash[]>([]);
+  const [points, setPoints] = useState<Feature[]>([]);
+  const [mapBounds, set]
+  const map = useMapEvents({
+    zoom: getMapBounds
+  });
 
   // Component initialization
   useEffect(() => {
     fetch('/collision-data.json')
       .then(response => response.json())
-      .then(data => setCarCrashes(data))
+      .then((data: CarCrash[]) => {
+        setCarCrashes(data);
+        setPoints(data.map(datum => ({
+          type: 'Feature',
+          properties: {
+            cluster: false,
+            id: crypto.randomUUID(),
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [
+              datum.LONGITUDE,
+              datum.LATITUDE
+            ]
+          }
+        })));
+      })
       .catch(error => console.error('Error fetching data:', error))
   }, []);
+
+  const getMapBounds = () => {
+    console.log(map.getBounds())
+    const bounds = map.getBounds();
+    return [
+      bounds.getSouthWest().lng,
+      bounds.getSouthWest().lat,
+      bounds.getNorthEast().lng,
+      bounds.getNorthEast().lat,
+    ] as BBox;
+  }
 
   return (
     <>
@@ -27,26 +57,34 @@ function App() {
           zoom={10}
           id="map"
         >
-          <TileLayer 
+          <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {carCrashes && carCrashes.slice(0, 1000).map(crash => (
-            <Marker
-              key={crypto.randomUUID()}
-              position={[crash.LATITUDE, crash.LONGITUDE]}
-            >
-              <Popup>
-                <h6>{crash["CRASH DATE"]?.toString()}</h6>
-                <p>Borough: {crash.BOROUGH}</p>
-                <p>Number of Persons Injured: {crash["NUMBER OF PERSONS INJURED"]}</p>
-                <p>Number of Persons Killed: {crash["NUMBER OF PERSONS KILLED"]}</p>
-                <p>Number of Pedestrians Injured: {crash["NUMBER OF PEDESTRIANS INJURED"]}</p>
-                <p>Number of Pedestrians Killed: {crash["NUMBER OF PEDESTRIANS KILLED"]}</p>
-                <p>Number of Cyclists Injured: {crash["NUMBER OF CYCLIST INJURED"]}</p>
-                <p>Number of Cyclists Killed: {crash["NUMBER OF CYCLIST KILLED"]}</p>
-              </Popup>  
-            </Marker>
-          ))}
+
+          <Clusterer
+            points={points}
+            zoom={map.getZoom()}
+            bounds={getMapBounds()}
+          />
+          {/* <MarkerClusterGroup>
+            {carCrashes && carCrashes.slice(0, 1000).map(crash => (
+              <Marker
+                key={crypto.randomUUID()}
+                position={[crash.LATITUDE, crash.LONGITUDE]}
+              >
+                <Popup>
+                  <h6>{crash["CRASH DATE"]?.toString()}</h6>
+                  <p>Borough: {crash.BOROUGH}</p>
+                  <p>Number of Persons Injured: {crash["NUMBER OF PERSONS INJURED"]}</p>
+                  <p>Number of Persons Killed: {crash["NUMBER OF PERSONS KILLED"]}</p>
+                  <p>Number of Pedestrians Injured: {crash["NUMBER OF PEDESTRIANS INJURED"]}</p>
+                  <p>Number of Pedestrians Killed: {crash["NUMBER OF PEDESTRIANS KILLED"]}</p>
+                  <p>Number of Cyclists Injured: {crash["NUMBER OF CYCLIST INJURED"]}</p>
+                  <p>Number of Cyclists Killed: {crash["NUMBER OF CYCLIST KILLED"]}</p>
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup> */}
         </MapContainer>
       </div>
       <div>
